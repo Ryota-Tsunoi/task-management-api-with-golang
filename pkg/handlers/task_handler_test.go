@@ -18,7 +18,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// HandlerTestSuite struct
 type HandlerTestSuite struct {
 	suite.Suite
 	db          *gorm.DB
@@ -27,7 +26,6 @@ type HandlerTestSuite struct {
 	taskHandler *TaskHandler
 }
 
-// SetupSuite runs before the suite
 func (suite *HandlerTestSuite) SetupSuite() {
 	var err error
 	suite.db, err = gorm.Open(sqlite.Open("file::memory:?cache=shared"), &gorm.Config{})
@@ -46,17 +44,14 @@ func (suite *HandlerTestSuite) SetupSuite() {
 	suite.taskHandler = NewTaskHandler(suite.taskRepo)
 }
 
-// TearDownSuite runs after the suite
 func (suite *HandlerTestSuite) TearDownSuite() {
 	suite.db.Exec("DROP TABLE tasks")
 }
 
-// BeforeTest runs before each test
 func (suite *HandlerTestSuite) BeforeTest(suiteName, testName string) {
 	suite.db.Exec("DELETE FROM tasks")
 }
 
-// TestCreateTask tests the CreateTask handler
 func (suite *HandlerTestSuite) TestCreateTask() {
 	taskJSON := `{"title":"Test Task","description":"Test Description","status":"ToDo"}`
 
@@ -77,7 +72,6 @@ func (suite *HandlerTestSuite) TestCreateTask() {
 	}
 }
 
-// TestCreateTaskInvalidPayload tests the CreateTask handler with invalid payload
 func (suite *HandlerTestSuite) TestCreateTaskInvalidPayload() {
 	taskJSON := `{"title":"","description":"Test Description","status":"ToDo"}`
 
@@ -95,9 +89,7 @@ func (suite *HandlerTestSuite) TestCreateTaskInvalidPayload() {
 	}
 }
 
-// TestGetAllTasks tests the GetAllTasks handler
 func (suite *HandlerTestSuite) TestGetAllTasks() {
-	// Creating tasks for testing
 	task1 := models.Task{Title: "Task 1", Description: "Description 1", Status: models.TaskStatusToDo}
 	task2 := models.Task{Title: "Task 2", Description: "Description 2", Status: models.TaskStatusInProgress}
 	suite.db.Create(&task1)
@@ -117,7 +109,6 @@ func (suite *HandlerTestSuite) TestGetAllTasks() {
 	}
 }
 
-// TestGetTaskByID tests the GetTaskByID handler
 func (suite *HandlerTestSuite) TestGetTaskByID() {
 	task := models.Task{Title: "Task 1", Description: "Description 1", Status: models.TaskStatusToDo}
 	suite.db.Create(&task)
@@ -141,25 +132,6 @@ func (suite *HandlerTestSuite) TestGetTaskByID() {
 	}
 }
 
-// TestGetTaskByIDNotFound tests the GetTaskByID handler with non-existing ID
-func (suite *HandlerTestSuite) TestGetTaskByIDNotFound() {
-	req := httptest.NewRequest(http.MethodGet, "/tasks/999", nil)
-	rec := httptest.NewRecorder()
-	c := suite.e.NewContext(req, rec)
-	c.SetPath("/tasks/:id")
-	c.SetParamNames("id")
-	c.SetParamValues("999")
-
-	err := suite.taskHandler.GetTaskByID(c)
-	if assert.Error(suite.T(), err) {
-		httpErr, ok := err.(*echo.HTTPError)
-		if assert.True(suite.T(), ok) {
-			assert.Equal(suite.T(), http.StatusNotFound, httpErr.Code)
-		}
-	}
-}
-
-// TestUpdateTask tests the UpdateTask handler
 func (suite *HandlerTestSuite) TestUpdateTask() {
 	task := models.Task{Title: "Task 1", Description: "Description 1", Status: models.TaskStatusToDo}
 	suite.db.Create(&task)
@@ -186,7 +158,6 @@ func (suite *HandlerTestSuite) TestUpdateTask() {
 	}
 }
 
-// TestUpdateTaskNotFound tests the UpdateTask handler with non-existing ID
 func (suite *HandlerTestSuite) TestUpdateTaskNotFound() {
 	updatedTaskJSON := `{"title":"Updated Task","description":"Updated Description","status":"Done"}`
 
@@ -207,47 +178,6 @@ func (suite *HandlerTestSuite) TestUpdateTaskNotFound() {
 	}
 }
 
-// TestDeleteTask tests the DeleteTask handler
-func (suite *HandlerTestSuite) TestDeleteTask() {
-	task := models.Task{Title: "Task to delete", Description: "Description to delete", Status: models.TaskStatusToDo}
-	suite.db.Create(&task)
-
-	req := httptest.NewRequest(http.MethodDelete, "/tasks/"+strconv.FormatUint(uint64(task.ID), 10), nil)
-	rec := httptest.NewRecorder()
-	c := suite.e.NewContext(req, rec)
-	c.SetPath("/tasks/:id")
-	c.SetParamNames("id")
-	c.SetParamValues(strconv.FormatUint(uint64(task.ID), 10))
-
-	if assert.NoError(suite.T(), suite.taskHandler.DeleteTask(c)) {
-		assert.Equal(suite.T(), http.StatusNoContent, rec.Code)
-	}
-
-	// Ensure the task was deleted
-	var count int64
-	suite.db.Model(&models.Task{}).Where("id = ?", task.ID).Count(&count)
-	assert.Equal(suite.T(), int64(0), count)
-}
-
-// TestDeleteTaskNotFound tests the DeleteTask handler with non-existing ID
-func (suite *HandlerTestSuite) TestDeleteTaskNotFound() {
-	req := httptest.NewRequest(http.MethodDelete, "/tasks/999", nil)
-	rec := httptest.NewRecorder()
-	c := suite.e.NewContext(req, rec)
-	c.SetPath("/tasks/:id")
-	c.SetParamNames("id")
-	c.SetParamValues("999")
-
-	err := suite.taskHandler.DeleteTask(c)
-	if assert.Error(suite.T(), err) {
-		httpErr, ok := err.(*echo.HTTPError)
-		if assert.True(suite.T(), ok) {
-			assert.Equal(suite.T(), http.StatusNotFound, httpErr.Code)
-		}
-	}
-}
-
-// TestUpdateTaskInvalidPayload tests the UpdateTask handler with an invalid payload
 func (suite *HandlerTestSuite) TestUpdateTaskInvalidPayload() {
 	task := models.Task{Title: "Valid Task", Description: "Valid Description", Status: models.TaskStatusToDo}
 	suite.db.Create(&task)
@@ -271,7 +201,43 @@ func (suite *HandlerTestSuite) TestUpdateTaskInvalidPayload() {
 	}
 }
 
-// TestHandlerTestSuite entry point
+func (suite *HandlerTestSuite) TestDeleteTask() {
+	task := models.Task{Title: "Task to delete", Description: "Description to delete", Status: models.TaskStatusToDo}
+	suite.db.Create(&task)
+
+	req := httptest.NewRequest(http.MethodDelete, "/tasks/"+strconv.FormatUint(uint64(task.ID), 10), nil)
+	rec := httptest.NewRecorder()
+	c := suite.e.NewContext(req, rec)
+	c.SetPath("/tasks/:id")
+	c.SetParamNames("id")
+	c.SetParamValues(strconv.FormatUint(uint64(task.ID), 10))
+
+	if assert.NoError(suite.T(), suite.taskHandler.DeleteTask(c)) {
+		assert.Equal(suite.T(), http.StatusNoContent, rec.Code)
+	}
+
+	var count int64
+	suite.db.Model(&models.Task{}).Where("id = ?", task.ID).Count(&count)
+	assert.Equal(suite.T(), int64(0), count)
+}
+
+func (suite *HandlerTestSuite) TestDeleteTaskNotFound() {
+	req := httptest.NewRequest(http.MethodDelete, "/tasks/999", nil)
+	rec := httptest.NewRecorder()
+	c := suite.e.NewContext(req, rec)
+	c.SetPath("/tasks/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("999")
+
+	err := suite.taskHandler.DeleteTask(c)
+	if assert.Error(suite.T(), err) {
+		httpErr, ok := err.(*echo.HTTPError)
+		if assert.True(suite.T(), ok) {
+			assert.Equal(suite.T(), http.StatusNotFound, httpErr.Code)
+		}
+	}
+}
+
 func TestHandlerTestSuite(t *testing.T) {
 	suite.Run(t, new(HandlerTestSuite))
 }

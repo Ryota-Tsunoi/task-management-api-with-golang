@@ -58,6 +58,12 @@
    lefthook install
    ```
 
+6. セキュリティ向上のため、Gosec をインストールします:
+
+   ```bash
+   go install github.com/securego/gosec/v2/cmd/gosec@latest
+   ```
+
 ## 開発
 
 ### API の実行

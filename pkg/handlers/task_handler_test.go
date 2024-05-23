@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/Ryota-Tsunoi/task-management-api/pkg/customerrors"
 	"github.com/Ryota-Tsunoi/task-management-api/pkg/models"
 	"github.com/Ryota-Tsunoi/task-management-api/pkg/repositories"
 	"github.com/go-playground/validator/v10"
@@ -132,6 +133,30 @@ func (suite *HandlerTestSuite) TestGetTaskByID() {
 	}
 }
 
+func (suite *HandlerTestSuite) TestGetTaskByIDNotFound() {
+	req := httptest.NewRequest(http.MethodGet, "/tasks/999", nil)
+	rec := httptest.NewRecorder()
+	c := suite.e.NewContext(req, rec)
+	c.SetPath("/tasks/:id")
+	c.SetParamNames("id")
+	c.SetParamValues("999")
+
+	err := suite.taskHandler.GetTaskByID(c)
+	if assert.Error(suite.T(), err) {
+		httpErr, ok := err.(*echo.HTTPError)
+		if assert.True(suite.T(), ok) {
+			assert.Equal(suite.T(), http.StatusNotFound, httpErr.Code)
+
+			// エラーレスポンスの内容を確認
+			resp, ok := httpErr.Message.(*ErrorResponse)
+			if assert.True(suite.T(), ok) {
+				assert.Equal(suite.T(), customerrors.ErrTaskNotFound, resp.Error.Code)
+				assert.Equal(suite.T(), "Task not found", resp.Error.Message)
+				assert.Equal(suite.T(), http.StatusNotFound, resp.Error.Status)
+			}
+		}
+	}
+}
 func (suite *HandlerTestSuite) TestUpdateTask() {
 	task := models.Task{Title: "Task 1", Description: "Description 1", Status: models.TaskStatusToDo}
 	suite.db.Create(&task)

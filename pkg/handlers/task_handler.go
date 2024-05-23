@@ -1,7 +1,7 @@
 package handlers
 
 import (
-	"fmt"
+	"errors"
 	"net/http"
 	"strconv"
 
@@ -9,6 +9,7 @@ import (
 	"github.com/Ryota-Tsunoi/task-management-api/pkg/models"
 	"github.com/Ryota-Tsunoi/task-management-api/pkg/repositories"
 	"github.com/labstack/echo/v4"
+	"gorm.io/gorm"
 )
 
 type TaskHandler struct {
@@ -87,13 +88,21 @@ func (h *TaskHandler) GetTaskByID(c echo.Context) error {
 	}
 
 	task, err := h.taskRepo.FindByID(uint(id))
-	fmt.Println(err)
 	if err != nil {
-		return echo.NewHTTPError(http.StatusNotFound, &ErrorResponse{
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return echo.NewHTTPError(http.StatusNotFound, &ErrorResponse{
+				Error: &customerrors.CustomError{
+					Code:    customerrors.ErrTaskNotFound,
+					Message: "Task not found",
+					Status:  http.StatusNotFound,
+				},
+			})
+		}
+		return echo.NewHTTPError(http.StatusInternalServerError, &ErrorResponse{
 			Error: &customerrors.CustomError{
-				Code:    customerrors.ErrTaskNotFound,
-				Message: "Task not found",
-				Status:  http.StatusNotFound,
+				Code:    customerrors.ErrInternalServerError,
+				Message: "Failed to get task",
+				Status:  http.StatusInternalServerError,
 			},
 		})
 	}

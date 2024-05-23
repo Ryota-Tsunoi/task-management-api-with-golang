@@ -1,6 +1,10 @@
 package models
 
-import "time"
+import (
+	"time"
+
+	"gorm.io/gorm"
+)
 
 type TaskStatus string
 
@@ -24,11 +28,9 @@ func (s TaskStatus) IsValid() bool {
 }
 
 type Task struct {
-	ID          uint       `json:"id"`
+	gorm.Model
 	Title       string     `json:"title"`
 	Description string     `json:"description"`
 	DueDate     time.Time  `json:"dueDate"`
 	Status      TaskStatus `json:"status"`
-	CreatedAt   time.Time  `json:"createdAt"`
-	UpdatedAt   time.Time  `json:"updatedAt"`
 }

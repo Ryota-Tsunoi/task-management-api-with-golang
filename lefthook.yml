@@ -1,0 +1,17 @@
+pre-commit:
+  commands:
+    lint:
+      run: go vet ./...
+    test:
+      run: go test ./...
+    fmt:
+      run: go fmt ./...
+    mod:
+      run: go mod tidy
+
+pre-push:
+  commands:
+    test:
+      run: go test ./...
+    security:
+      run: gosec ./...

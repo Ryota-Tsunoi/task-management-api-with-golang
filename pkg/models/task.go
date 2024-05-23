@@ -29,8 +29,8 @@ func (s TaskStatus) IsValid() bool {
 
 type Task struct {
 	gorm.Model
-	Title       string     `json:"title"`
-	Description string     `json:"description"`
+	Title       string     `json:"title" validate:"required"`
+	Description string     `json:"description" validate:"required"`
 	DueDate     time.Time  `json:"dueDate"`
-	Status      TaskStatus `json:"status"`
+	Status      TaskStatus `json:"status" gorm:"default:ToDo"`
 }

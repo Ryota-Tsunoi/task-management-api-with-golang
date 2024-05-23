@@ -11,3 +11,6 @@ build:
 clean:
 	rm -rf bin/
 	rm -rf tmp/
+
+test:
+	go test -v ./...
